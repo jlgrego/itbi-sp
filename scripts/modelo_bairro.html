@@ -1,0 +1,473 @@
+<title>Preço do m² · __BAIRRO__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Simulação de site: papel quente + verde-azulado profundo. Serif nos títulos, sans nos dados.
+   Navegação: barra superior com páginas; dentro de ruas e prédios, painel com métricas e gráfico. */
+:root {
+  --bg: #f5f3ee; --fg: #1c1e21; --muted: #6a6e75; --line: #dad6cc; --card: #fbfaf7;
+  --accent: #0d5b58; --bar: #cfd9d3; --soft: #ece9e1;
+  --display: "Newsreader", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a; --fg: #ecebe6; --muted: #9a9ea5; --line: #2e3238; --card: #1c1f23;
+    --accent: #6fc3b8; --bar: #33423e; --soft: #22262b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a; --fg: #ecebe6; --muted: #9a9ea5; --line: #2e3238; --card: #1c1f23;
+  --accent: #6fc3b8; --bar: #33423e; --soft: #22262b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/1.5 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 24px;
+}
+.wrap { max-width: 1200px; margin: 0 auto; }
+
+/* Barra superior */
+.topo { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topo .wrap { display: flex; align-items: center; gap: 16px; padding-block: 12px; flex-wrap: wrap; }
+.marca { font: 600 18px var(--display); cursor: pointer; border: 0; background: none; color: var(--fg); padding: 0; }
+.nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav button {
+  font: 500 14px var(--body); padding: 7px 12px; border-radius: 6px; cursor: pointer;
+  border: 0; background: transparent; color: var(--muted);
+}
+.nav button[aria-current="page"] { color: var(--fg); background: var(--soft); }
+.nav button:focus-visible, .marca:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nav button:hover { color: var(--fg); }
+.busca-topo { margin-left: auto; min-width: 200px; flex: 0 1 280px; position: relative; }
+.busca-topo input {
+  width: 100%; font: 14px var(--body); padding: 8px 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--card); color: var(--fg);
+}
+.sugestoes {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--card);
+  border: 1px solid var(--line); border-radius: 8px; max-height: 320px; overflow-y: auto; z-index: 10; list-style: none; margin: 0; padding: 4px;
+}
+.sugestoes li { padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+.sugestoes li:hover, .sugestoes li:focus { background: var(--soft); outline: none; }
+.sugestoes small { color: var(--muted); }
+.sugestoes:empty { display: none; }
+
+/* Conteúdo */
+main { padding-top: 22px; }
+.crumbs { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.crumbs button { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font: inherit; }
+.crumbs button:hover { text-decoration: underline; }
+h1 { font: 600 32px/1.15 var(--display); margin: 0 0 8px; text-wrap: balance; }
+h2 { font: 600 20px/1.2 var(--display); margin: 0 0 6px; }
+.sub { color: var(--muted); margin: 0; max-width: 66ch; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.grid2 { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.grid3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+@media (max-width: 800px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.stat { font: 600 26px var(--display); font-variant-numeric: tabular-nums; margin-top: 4px; overflow-wrap: anywhere; }
+.acento { color: var(--accent); }
+.bloco { margin-top: 26px; }
+.hero-busca { margin-top: 18px; position: relative; max-width: 640px; }
+.hero-busca input {
+  width: 100%; font: 17px var(--body); padding: 14px 16px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--card); color: var(--fg);
+}
+.hero-busca input:focus, .busca-topo input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li {
+  display: flex; justify-content: space-between; gap: 10px; padding: 10px 8px;
+  border-bottom: 1px solid var(--line); cursor: pointer; min-width: 0;
+}
+.list li:hover, .list li:focus { background: var(--soft); outline: none; }
+.list li:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.list .txt { min-width: 0; overflow-wrap: anywhere; }
+.list small { color: var(--muted); display: block; }
+.list .val { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.list .vazio { cursor: default; color: var(--muted); }
+.list .vazio:hover { background: none; }
+.filtro { width: 100%; font: 15px var(--body); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); margin-bottom: 12px; }
+.filtro:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+
+/* Painel de rua e prédio */
+.cabeca { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.btn {
+  font: 500 13px var(--body); padding: 7px 12px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--card); color: var(--fg);
+}
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 14px; }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+.tile .stat { font-size: 22px; }
+.nota { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.tabs .grupo { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs button {
+  font: 500 13px var(--body); padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+}
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--card); }
+.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ano { font: 500 13px var(--body); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); }
+#grafico svg { display: block; width: 100%; height: auto; margin-top: 10px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.legend .barra::before, .legend .linha::before { content: ""; display: inline-block; vertical-align: middle; margin-right: 6px; }
+.legend .barra::before { width: 10px; height: 10px; background: var(--bar); border-radius: 2px; }
+.legend .linha::before { width: 14px; height: 2px; background: var(--accent); }
+
+#grafico { position: relative; }
+.tip {
+  position: absolute; top: 0; pointer-events: none; z-index: 2; white-space: nowrap;
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,.12);
+}
+
+/* Sobre */
+.texto { max-width: 70ch; }
+.texto p { margin: 0 0 14px; }
+
+footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+footer p { max-width: 90ch; margin: 0; }
+</style>
+
+<div class="topo">
+  <div class="wrap">
+    <button class="marca" data-ir="inicio" aria-label="Ir para a página inicial">Preço do m² · __BAIRRO__</button>
+    <nav class="nav" aria-label="Principal">
+      <button data-ir="inicio">Início</button>
+      <button data-ir="ruas">Ruas</button>
+      <button data-ir="predios">Prédios</button>
+      <button data-ir="sobre">Sobre os dados</button>
+    </nav>
+    <div class="busca-topo">
+      <input id="busca-topo" type="search" placeholder="Buscar rua ou prédio" autocomplete="off" aria-label="Buscar em todo o site">
+      <ul class="sugestoes" id="sugestoes" role="listbox"></ul>
+    </div>
+  </div>
+</div>
+
+<main class="wrap" id="app"></main>
+
+<footer class="wrap">
+  <p>Fonte: transações de ITBI da Prefeitura de São Paulo (__PERIODO__). Preço por m² = valor declarado ÷ área construída, com imóveis entre 20 m² e 1.000 m². Cada cadastro aparece uma vez, com a transação mais recente. Valor declarado não é avaliação oficial.</p>
+</footer>
+
+<script>
+const D = /*__DATA__*/;
+
+const fmt = v => (v == null || isNaN(v) ? "—" : "R$ " + Math.round(v).toLocaleString("pt-BR"));
+const fmtEixo = (v, m) => m === "valor"
+  ? (v >= 1e6 ? "R$ " + (v / 1e6).toFixed(1).replace(".", ",") + " mi" : "R$ " + Math.round(v / 1000) + " mil")
+  : "R$ " + Math.round(v).toLocaleString("pt-BR");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+const app = document.getElementById("app");
+let vista = { nome: "inicio" };
+let metrica = "valor";
+let serieAtiva = [];
+let mesSel = -1;
+
+function ir(nome, extra) {
+  vista = Object.assign({ nome }, extra || {});
+  metrica = "valor";
+  mesSel = -1;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function marcarNav() {
+  document.querySelectorAll(".nav button").forEach(b => {
+    const ativo = b.dataset.ir === vista.nome || (b.dataset.ir === "ruas" && vista.nome === "rua") || (b.dataset.ir === "predios" && vista.nome === "predio");
+    if (ativo) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+}
+function irRua(nome) { const r = D.ruas.find(x => x.nome === nome); if (r) ir("rua", { rua: r }); }
+function irPredio(i) { ir("predio", { predio: D.predios[i], idx: i }); }
+function serieDaRua(nome) { const r = D.ruas.find(x => x.nome === nome); return r ? r.serie : []; }
+function prediosDaRua(nome) { return D.predios.map((p, i) => ({ p, i })).filter(o => o.p.rua === nome); }
+
+// Páginas
+function paginaInicio() {
+  const b = D.bairro;
+  const top = D.ruas.slice(0, 8);
+  app.innerHTML = `
+    <section style="padding-top:8px">
+      <div class="label">__BAIRRO__ · transações de ITBI, __PERIODO_CURTO__</div>
+      <h1 style="margin-top:6px">Quanto custa o m² no __BAIRRO__, rua por rua e prédio por prédio</h1>
+      <p class="sub">Use a busca para encontrar uma rua ou um prédio. Cada página mostra a mediana do preço por m², o número de transações e como o valor mudou mês a mês.</p>
+      <div class="hero-busca">
+        <input id="busca-hero" type="search" placeholder="Ex.: Rua Cacaueiro, Avenida Celso Garcia" autocomplete="off" aria-label="Buscar rua ou prédio">
+        <ul class="sugestoes" id="sugestoes-hero" role="listbox"></ul>
+      </div>
+    </section>
+    <section class="bloco grid3">
+      <div class="card"><div class="label">Valor mediano</div><div class="stat acento">${fmt(b.valor_mediano)}</div></div>
+      <div class="card"><div class="label">R$/m² mediano</div><div class="stat acento">${fmt(b.mediana)}</div></div>
+      <div class="card"><div class="label">Transações</div><div class="stat">${b.n}</div></div>
+      <div class="card"><div class="label">Ruas · prédios</div><div class="stat">${D.ruas.length} · ${D.predios.length}</div></div>
+    </section>
+    <section class="bloco grid2">
+      <div class="card">
+        <div class="label">Ruas com mais transações</div>
+        <ul class="list" style="margin-top:6px">${top.map(r => `
+          <li data-rua="${esc(r.nome)}" tabindex="0"><span class="txt">${esc(r.nome)}<small>${r.n} transações · última ${r.ultima}</small></span><span class="val">${fmt(r.mediana)}<small>R$/m²</small></span></li>`).join("")}
+        </ul>
+        <p class="nota" style="margin-top:10px"><a href="#" data-ir="ruas" style="color:var(--accent)">Ver todas as ${D.ruas.length} ruas</a></p>
+      </div>
+      <div class="card">
+        <div class="label">Como ler os números</div>
+        <p style="margin:8px 0 10px">A mediana é o valor do meio: metade das transações ficou acima e metade abaixo. Ela é menos sensível a valores muito altos do que a média.</p>
+        <p style="margin:0 0 10px">O preço por m² usa a área construída do prédio. Em condomínios, a área é do prédio inteiro, então prédios com muitas unidades podem ter valores diferentes do que a unidade vale.</p>
+        <p style="margin:0"><a href="#" data-ir="sobre" style="color:var(--accent)">Entenda o método completo</a></p>
+      </div>
+    </section>`;
+  ligarBuscaHero();
+  ligarListas(app);
+}
+
+function paginaLista(tipo) {
+  const ehRua = tipo === "ruas";
+  app.innerHTML = `
+    <div class="crumbs"><button data-ir="inicio">Início</button> › ${ehRua ? "Ruas" : "Prédios"}</div>
+    <h1>${ehRua ? "Ruas do __BAIRRO__" : "Prédios do __BAIRRO__"}</h1>
+    <p class="sub">${ehRua ? D.ruas.length + " ruas com transações no recorte." : D.predios.length + " prédios identificados por rua e número."}</p>
+    <div class="bloco card">
+      <input class="filtro" id="filtro-lista" type="search" placeholder="Filtrar ${ehRua ? "ruas" : "prédios"}" autocomplete="off" aria-label="Filtrar">
+      <div class="hint" id="contagem-lista"></div>
+      <ul class="list" id="itens-lista"></ul>
+    </div>`;
+  const desenhar = () => {
+    const q = norm(document.getElementById("filtro-lista").value.trim());
+    const itens = ehRua
+      ? D.ruas.filter(r => !q || norm(r.nome).includes(q)).slice(0, 200).map(r => `
+          <li data-rua="${esc(r.nome)}" tabindex="0"><span class="txt">${esc(r.nome)}<small>${r.n} transações · última ${r.ultima}</small></span><span class="val">${fmt(r.mediana)}<small>R$/m²</small></span></li>`)
+      : D.predios.map((p, i) => ({ p, i })).filter(({ p }) => !q || norm(p.rua + " " + p.numero + " " + p.ref).includes(q)).slice(0, 200).map(({ p, i }) => `
+          <li data-idx="${i}" tabindex="0"><span class="txt">${esc(p.rua + ", " + p.numero)}${p.ref ? "<small>" + esc(p.ref) + "</small>" : ""}</span><span class="val">${fmt(p.mediana)}<small>n=${p.n}</small></span></li>`);
+    document.getElementById("itens-lista").innerHTML = itens.length ? itens.join("") : "<li class='vazio'>Nada encontrado.</li>";
+    document.getElementById("contagem-lista").textContent = itens.length + " de " + (ehRua ? D.ruas.length : D.predios.length) + " exibidos (máx. 200)";
+    ligarListas(document.getElementById("itens-lista"));
+  };
+  document.getElementById("filtro-lista").addEventListener("input", desenhar);
+  desenhar();
+}
+
+function painelRuaOuPredio(cfg) {
+  const tiles = cfg.tiles.map(([l, v, ac]) => `<div class="tile"><div class="label">${l}</div><div class="stat${ac ? " acento" : ""}">${v}</div></div>`).join("");
+  app.innerHTML = `
+    <div class="crumbs"><button data-ir="inicio">Início</button> › <button data-ir="${cfg.voltarTipo}" data-args="${esc(cfg.voltarArgs || "")}">${esc(cfg.voltarNome)}</button> › ${esc(cfg.titulo)}</div>
+    <div class="cabeca">
+      <div>
+        <div class="label">${cfg.tipo}</div>
+        <h1 style="margin-top:4px">${esc(cfg.titulo)}</h1>
+        <p class="sub">${cfg.sub}</p>
+      </div>
+      <button class="btn" data-ir="${cfg.voltarTipo}" data-args="${esc(cfg.voltarArgs || "")}">← ${esc(cfg.voltarNome)}</button>
+    </div>
+    <div class="tiles">${tiles}</div>
+    <p class="nota">Valores medianos de todo o período disponível na base.</p>
+    <section class="bloco card">
+      <div class="tabs">
+        <div class="grupo" role="group" aria-label="Métrica">
+          <button data-m="valor" aria-pressed="${metrica === "valor"}">Valor de venda</button>
+          <button data-m="m2" aria-pressed="${metrica === "m2"}">R$/m² construída</button>
+        </div>
+        <span class="ano">2026</span>
+      </div>
+      <div class="label" style="margin-top:12px">${cfg.rotuloGrafico}</div>
+      <div id="grafico"></div>
+      <div class="legend"><span class="barra">Número de transações</span><span class="linha">Mediana no mês</span></div>
+      <p class="nota">Clique em um mês para ver as transações dele.</p>
+      <div id="lista-mes"></div>
+    </section>
+    <section class="bloco card">${cfg.extra}</section>`;
+  app.querySelectorAll(".tabs button[data-m]").forEach(b => b.addEventListener("click", () => {
+    metrica = b.dataset.m;
+    app.querySelectorAll(".tabs button[data-m]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    desenharGrafico(cfg.serie, cfg.rotuloGrafico);
+  }));
+  desenharGrafico(cfg.serie, cfg.rotuloGrafico);
+  ligarListas(app);
+}
+
+function paginaRua(r) {
+  const prs = prediosDaRua(r.nome);
+  const linhas = prs.map(({ p, i }) => `
+    <li data-idx="${i}" tabindex="0"><span class="txt">${esc(p.numero)}${p.ref ? "<small>" + esc(p.ref) + "</small>" : ""}</span><span class="val">${fmt(p.mediana)}<small>n=${p.n} · última ${p.ultima}</small></span></li>`).join("");
+  painelRuaOuPredio({
+    tipo: "Rua", titulo: r.nome, sub: prs.length + " prédios com transações · última transação " + r.ultima,
+    voltarTipo: "ruas", voltarNome: "Ruas",
+    tiles: [["Valor mediano", fmt(r.valor), true], ["R$/m² mediano", fmt(r.mediana), true], ["Transações", r.n], ["Prédios", prs.length]],
+    rotuloGrafico: r.nome + " · " + (metrica === "valor" ? "valor de venda mediano por mês" : "R$/m² construída mediano por mês"),
+    serie: r.serie,
+    extra: `<div class="label">Prédios desta rua</div><ul class="list" style="margin-top:6px">${linhas || "<li class='vazio'>Sem prédios.</li>"}</ul>`,
+  });
+}
+
+function paginaPredio(p) {
+  const linhas = (p.transacoes || []).map(x => `
+    <li><span class="txt">${x.data}<small>cadastro ${esc(x.cadastro)}</small></span><span class="val">${fmt(x.valor)}<small>${fmt(x.preco_m2)}/m²</small></span></li>`).join("");
+  painelRuaOuPredio({
+    tipo: "Prédio", titulo: p.rua + ", " + p.numero, sub: (p.ref ? p.ref + " · " : "") + "última transação " + p.ultima,
+    voltarTipo: "rua", voltarNome: p.rua, voltarArgs: p.rua,
+    tiles: [["Valor mediano", fmt(p.valor), true], ["R$/m² mediano", fmt(p.mediana), true], ["Transações", p.n], ["Área construída", p.area + " m²"]],
+    rotuloGrafico: p.rua + " (série da rua) · " + (metrica === "valor" ? "valor de venda mediano por mês" : "R$/m² construída mediano por mês"),
+    serie: serieDaRua(p.rua),
+    extra: `<div class="label">Transações deste prédio</div><ul class="list" style="margin-top:6px">${linhas || "<li class='vazio'>Sem transações.</li>"}</ul>`,
+  });
+}
+
+function paginaSobre() {
+  app.innerHTML = `
+    <div class="crumbs"><button data-ir="inicio">Início</button> › Sobre os dados</div>
+    <h1>Sobre os dados</h1>
+    <div class="texto bloco">
+      <p><strong>Origem.</strong> As transações vêm das guias de ITBI pagas à Prefeitura de São Paulo, publicadas pela Secretaria Municipal da Fazenda em planilhas anuais e atualizadas todo mês. O período coberto aparece no topo de cada página.</p>
+      <p><strong>Quais imóveis entram.</strong> Só compra e venda, e só imóveis ativos. Cancelados e registros sem valor válido ficam de fora. Também são excluídos imóveis com área construída abaixo de 20 m² ou acima de 1.000 m².</p>
+      <p><strong>Um registro por cadastro.</strong> Quando o mesmo cadastro tem mais de uma transação, fica só a mais recente. Por isso o gráfico mensal mostra quando a última transação de cada imóvel aconteceu, e não o total de vendas do mês.</p>
+      <p><strong>Preço por m².</strong> É o valor declarado pelo contribuinte dividido pela área construída do prédio. Valor declarado não é avaliação oficial, e o valor de venal de referência não entra neste cálculo.</p>
+      <p><strong>Medianas.</strong> Em cada rua, prédio ou bairro, a mediana é o valor do meio. Quando há poucas transações, a mediana muda muito de um mês para outro.</p>
+      <p><strong>O que ainda falta.</strong> Comparação com 2025, mapa com a localização dos prédios e separação entre apartamentos e casas de condomínio.</p>
+    </div>`;
+  ligarListas(app);
+}
+
+// Ligações
+function ligarListas(raiz) {
+  raiz.querySelectorAll("[data-rua]").forEach(li => {
+    const go = () => irRua(li.dataset.rua);
+    li.addEventListener("click", go);
+    li.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  });
+  raiz.querySelectorAll("[data-idx]").forEach(li => {
+    const go = () => irPredio(+li.dataset.idx);
+    li.addEventListener("click", go);
+    li.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  });
+  raiz.querySelectorAll("[data-ir]").forEach(b => {
+    b.addEventListener("click", e => {
+      e.preventDefault();
+      const alvo = b.dataset.ir;
+      if (alvo === "rua" && b.dataset.args) irRua(b.dataset.args);
+      else ir(alvo);
+    });
+  });
+}
+
+function sugerir(q, lista, entrada) {
+  const qn = norm(q.trim());
+  if (!qn) { lista.innerHTML = ""; return; }
+  const ruas = D.ruas.filter(r => norm(r.nome).includes(qn)).slice(0, 6);
+  const prs = D.predios.map((p, i) => ({ p, i })).filter(({ p }) => norm(p.rua + " " + p.numero).includes(qn)).slice(0, 6);
+  if (!ruas.length && !prs.length) { lista.innerHTML = "<li><small>Nada encontrado</small></li>"; return; }
+  lista.innerHTML = [
+    ...ruas.map(r => `<li data-rua="${esc(r.nome)}" tabindex="0"><span>${esc(r.nome)}</span><small>Rua · ${fmt(r.mediana)}</small></li>`),
+    ...prs.map(({ p, i }) => `<li data-idx="${i}" tabindex="0"><span>${esc(p.rua + ", " + p.numero)}</span><small>Prédio · ${fmt(p.mediana)}</small></li>`),
+  ].join("");
+  lista.querySelectorAll("li[data-rua], li[data-idx]").forEach(li => {
+    const go = () => { entrada.value = ""; lista.innerHTML = ""; if (li.dataset.rua) irRua(li.dataset.rua); else irPredio(+li.dataset.idx); };
+    li.addEventListener("click", go);
+    li.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  });
+}
+function ligarBuscaHero() {
+  const campo = document.getElementById("busca-hero");
+  const lista = document.getElementById("sugestoes-hero");
+  campo.addEventListener("input", () => sugerir(campo.value, lista, campo));
+}
+const campoTopo = document.getElementById("busca-topo");
+const listaTopo = document.getElementById("sugestoes");
+campoTopo.addEventListener("input", () => sugerir(campoTopo.value, listaTopo, campoTopo));
+campoTopo.addEventListener("blur", () => setTimeout(() => { listaTopo.innerHTML = ""; }, 150));
+
+document.querySelectorAll(".topo [data-ir]").forEach(b => b.addEventListener("click", () => ir(b.dataset.ir)));
+
+// Gráfico
+function mostrarMes(i) {
+  mesSel = i;
+  const d = serieAtiva[i];
+  desenharGrafico(serieAtiva);
+  const el = document.getElementById("lista-mes");
+  if (!el || !d) return;
+  el.innerHTML = "<div class='sec-title'>Transações de " + d.mes + " · " + d.lista.length + " no mês</div><ul class='list'>" +
+    d.lista.map(x => "<li><span class='txt'>" + esc(x.rua + ", " + x.numero) + "<small>" + x.data + " · cadastro " + esc(x.cadastro) + "</small></span>" +
+      "<span class='val'>" + fmt(x.valor) + "<small>" + fmt(x.m2) + "/m²</small></span></li>").join("") + "</ul>";
+}
+
+function desenharGrafico(s, rotulo) {
+  const el = document.getElementById("grafico");
+  if (!el) return;
+  if (!s || !s.length) { el.innerHTML = "<p class='nota'>Sem série mensal para este local.</p>"; return; }
+  serieAtiva = s;
+  const W = 600, H = 260, pl = 60, pr = 12, pt = 14, pb = 30;
+  const key = metrica === "valor" ? "valor" : "m2";
+  const maxN = Math.max(...s.map(x => x.n), 1);
+  const vals = s.map(x => x[key]);
+  let minV = Math.min(...vals), maxV = Math.max(...vals);
+  const folga = (maxV - minV) * 0.15 || maxV * 0.1;
+  minV = Math.max(0, minV - folga); maxV = maxV + folga;
+  const bw = (W - pl - pr) / s.length;
+  const cx = i => pl + bw * i + bw / 2;
+  const yBase = H - pb;
+  const yM = v => pt + (yBase - pt) * (1 - (v - minV) / ((maxV - minV) || 1));
+  const yN = n => yBase - (yBase - pt) * 0.45 * (n / maxN);
+  let svg = "<svg viewBox='0 0 " + W + " " + H + "' role='img' aria-label='Gráfico mensal'>";
+  for (let k = 0; k <= 3; k++) {
+    const v = minV + (maxV - minV) * k / 3;
+    const y = yM(v);
+    svg += "<line x1='" + pl + "' x2='" + (W - pr) + "' y1='" + y + "' y2='" + y + "' stroke='var(--line)' stroke-width='1'/>";
+    svg += "<text x='" + (pl - 8) + "' y='" + (y + 4) + "' text-anchor='end' font-size='11' fill='var(--muted)'>" + fmtEixo(v, metrica) + "</text>";
+  }
+  s.forEach((d, i) => {
+    const top = yN(d.n);
+    svg += "<rect x='" + (pl + bw * i + bw * 0.22) + "' y='" + top + "' width='" + (bw * 0.56) + "' height='" + (yBase - top) + "' rx='2' fill='" + (i === mesSel ? "var(--accent)" : "var(--bar)") + "'/>";
+  });
+  if (s.length > 1) svg += "<polyline points='" + s.map((d, i) => cx(i) + "," + yM(d[key])).join(" ") + "' fill='none' stroke='var(--accent)' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/>";
+  s.forEach((d, i) => {
+    svg += "<circle cx='" + cx(i) + "' cy='" + yM(d[key]) + "' r='4' fill='var(--accent)' stroke='var(--card)' stroke-width='2'/>";
+    svg += "<text x='" + cx(i) + "' y='" + (H - 8) + "' text-anchor='middle' font-size='11' fill='var(--muted)'>" + d.mes + "</text>";
+  });
+  s.forEach((d, i) => {
+    svg += "<rect class='hit' data-i='" + i + "' x='" + (pl + bw * i) + "' y='" + pt + "' width='" + bw + "' height='" + (yBase - pt) +
+      "' fill='transparent' style='cursor:pointer' tabindex='0' role='button' aria-label='Ver transações de " + d.mes + "'/>";
+  });
+  el.innerHTML = svg + "</svg><div class='tip' hidden></div>";
+  const tip = el.querySelector(".tip");
+  const mostrarTip = h => {
+    const d = s[+h.dataset.i];
+    tip.innerHTML = "<strong>" + d.mes + "</strong><br>Valor mediano: " + fmt(d.valor) +
+      "<br>R$/m² mediano: " + fmt(d.m2) + "<br>Transações: " + d.n;
+    tip.hidden = false;
+    const box = el.getBoundingClientRect(), r = h.getBoundingClientRect();
+    const tw = tip.offsetWidth;
+    const left = Math.max(0, Math.min(r.left - box.left + r.width / 2 - tw / 2, box.width - tw));
+    tip.style.left = left + "px";
+  };
+  el.querySelectorAll(".hit").forEach(h => {
+    const go = () => mostrarMes(+h.dataset.i);
+    h.addEventListener("click", go);
+    h.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    h.addEventListener("mouseenter", () => mostrarTip(h));
+    h.addEventListener("mouseleave", () => { tip.hidden = true; });
+    h.addEventListener("focus", () => mostrarTip(h));
+    h.addEventListener("blur", () => { tip.hidden = true; });
+  });
+}
+
+function render() {
+  marcarNav();
+  if (vista.nome === "inicio") paginaInicio();
+  else if (vista.nome === "ruas") paginaLista("ruas");
+  else if (vista.nome === "predios") paginaLista("predios");
+  else if (vista.nome === "rua") paginaRua(vista.rua);
+  else if (vista.nome === "predio") paginaPredio(vista.predio);
+  else if (vista.nome === "sobre") paginaSobre();
+}
+render();
+</script>
