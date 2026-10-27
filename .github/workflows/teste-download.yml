@@ -1,0 +1,15 @@
+name: teste-download
+on: workflow_dispatch
+
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar resposta do portal
+        run: |
+          curl -sS -I -L -m 60 "https://prefeitura.sp.gov.br/cidade/secretarias/upload/fazenda/arquivos/itbi/GUIAS%20DE%20ITBI%20PAGAS%20%2830092026%29.xlsx"
+
+      - name: Baixar o arquivo e medir o tamanho
+        run: |
+          curl -sS -L -m 300 -o itbi_2026.xlsx "https://prefeitura.sp.gov.br/cidade/secretarias/upload/fazenda/arquivos/itbi/GUIAS%20DE%20ITBI%20PAGAS%20%2830092026%29.xlsx"
+          ls -lh itbi_2026.xlsx
