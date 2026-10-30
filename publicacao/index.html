@@ -107,8 +107,7 @@ a { color: inherit; }
 .pouco { color: var(--muted); }
 .limpar-datas { margin-top: 10px; border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; color: var(--accent); }
 .limpar-datas:hover { background: var(--soft); }
-.coluna-mapa { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.coluna-mapa > .mapa-col { flex: 1; }
+.coluna-mapa { display: flex; flex-direction: column; gap: 12px; min-width: 0; align-self: start; }
 .info-mapa { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .info-mapa > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .info-mapa .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
@@ -130,7 +129,13 @@ a { color: inherit; }
 
 /* grade mapa + painel */
 .grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; padding-bottom: 36px; }
-.mapa-col { overflow: hidden; position: relative; min-height: 560px; border: 1px solid var(--line); border-radius: 14px; background: #e9e6df; }
+.coluna-mapa > .mapa-col { flex: none; }
+.coluna-mapa > .resumo { flex: 1; margin: 0; }
+.coluna-mapa > .resumo .v { font-size: 19px; }
+.resumo-filtros { display: flex; flex-wrap: wrap; gap: 8px; }
+.resumo-filtros span { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 12px; color: var(--muted); }
+.resumo-filtros b { font-weight: 600; color: var(--ink); }
+.mapa-col { overflow: hidden; position: relative; min-height: 0; aspect-ratio: 1 / 1; width: 100%; border: 1px solid var(--line); border-radius: 14px; background: #e9e6df; }
 .mapa { position: absolute; inset: 0; overflow: hidden; background: #e9e6df; cursor: grab; touch-action: none; user-select: none; }
 .mapa.arrastando { cursor: grabbing; }
 .camada { position: absolute; inset: 0; }
@@ -171,7 +176,7 @@ a { color: inherit; }
 .bloco-p h3 { font: 400 17px var(--serif); margin: 0 0 8px; }
 .bloco-p svg { width: 100%; height: auto; display: block; }
 .nota { color: var(--muted); font-size: 13px; margin: 0; }
-.linha-t { display: grid; grid-template-columns: 90px minmax(0, 1fr) 64px 112px 100px; gap: 10px; align-items: center; padding: 10px 2px; border-top: 1px solid var(--line); font-size: 14px; }
+.linha-t { display: grid; grid-template-columns: 90px minmax(0, 1fr) 64px 112px 100px; gap: 10px; align-items: center; padding: 7px 2px; border-top: 1px solid var(--line); font-size: 14px; }
 .linha-t.cab { font-size: 12px; color: var(--muted); border-top: 0; padding-top: 0; }
 .lista-t.longa { max-height: 420px; overflow-y: auto; }
 .limite-aviso { margin-top: 12px; padding: 12px 14px; background: var(--soft); border-radius: 10px; color: var(--ink); }
@@ -325,6 +330,17 @@ a { color: inherit; }
 .tab-wrap { overflow-x: auto; }
 .modal-corpo .unid { margin-top: 10px; }
 @media (max-width: 760px) { .modal { padding: 0; } .modal-caixa { max-height: 100vh; height: 100vh; border-radius: 0; } }
+@media (max-width: 760px) { .mapa-col { aspect-ratio: auto; min-height: 420px; } }
+.mapa-busca { position: absolute; top: 14px; left: 14px; width: min(340px, calc(100% - 150px)); z-index: 4; touch-action: auto; }
+.mapa-busca .busca-campo { width: 100%; }
+.mapa-busca .busca-campo input { height: 46px; font-size: 14px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.mapa-busca .busca-campo > svg { top: 14px; }
+.mapa-busca .busca-campo .sugestoes { top: 52px; max-height: 300px; }
+.mdica { position: absolute; z-index: 6; width: 230px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--ink); box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+.mdica[hidden] { display: none; }
+.mdica b { font-weight: 600; font-size: 14px; }
+.mdica .sub { color: var(--muted); font-size: 12px; }
+.mdica button { margin-top: 8px; width: 100%; background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 7px 10px; font: 600 12px var(--sans); cursor: pointer; }
 </style>
 <script data-goatcounter="https://itbi-sp.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -342,11 +358,6 @@ a { color: inherit; }
   </section>
 
   <div class="barra">
-    <div class="campo-box busca-campo" role="search">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input id="busca" type="search" placeholder="Buscar endereço ou rua" autocomplete="off" aria-label="Buscar endereço">
-      <ul class="sugestoes" id="sugestoes" hidden></ul>
-    </div>
 
     <details class="campo" id="dd-bairro">
       <summary><small>Bairro</small><strong id="lbl-bairro">Todos os bairros</strong></summary>
@@ -385,18 +396,23 @@ a { color: inherit; }
     <button class="limpar" id="limpar-av" type="button">Limpar filtros avançados</button>
   </section>
 
-  <section class="card resumo" id="resumo"></section>
-
   <div class="grade">
     <div class="coluna-mapa">
     <section class="card mapa-col">
       <div class="mapa" id="mapa">
+        <div class="mapa-busca">
+    <div class="campo-box busca-campo" role="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="busca" type="search" placeholder="Buscar endereço ou rua" autocomplete="off" aria-label="Buscar endereço">
+      <ul class="sugestoes" id="sugestoes" hidden></ul>
+    </div>
+        </div>
         <div class="camada" id="camada"></div>
-        <div class="mapa-rot" id="mapa-local">São Paulo, SP</div>
         <div class="mapa-zoom">
           <button id="z-mais" type="button" aria-label="Aproximar">+</button>
           <button id="z-menos" type="button" aria-label="Afastar">−</button>
         </div>
+        <div class="mdica" id="mdica" hidden></div>
         <div class="legenda">
           <div class="titulo">Preço/m²</div>
           <div class="escala" id="escala"></div>
@@ -410,6 +426,8 @@ a { color: inherit; }
       <div><svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div><div class="l">Última atualização</div><div class="v" id="info-atual">—</div></div></div>
       <div><svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div><div class="l">Transações na base</div><div class="v" id="info-n">—</div></div></div>
     </div>
+    <section class="card resumo" id="resumo"></section>
+    <div class="resumo-filtros" id="resumo-filtros" aria-label="Filtros aplicados"></div>
     </div>
 
     <aside class="card painel" id="painel" aria-live="polite"></aside>
@@ -503,6 +521,9 @@ const MES_MIN = mesDe(D.bairro.inicio), MES_MAX = mesDe(D.bairro.fim);
 // pinos: ligados ao edifício de mesmo endereço
 const PALETA = ["#d6efe9", "#b5e2d8", "#8fd2c3", "#63bcab", "#3da393", "#23857a", "#136a60", "#0b4f48"];
 let CORTES = []; // limites das faixas de cor, calculados com os filtros atuais
+let CLUSTERS = []; // endereços de cada bolha desenhada
+let ULTIMA = []; // transações filtradas, para a prévia do marcador
+let FIXA = false; // prévia aberta por clique (não some ao tirar o mouse)
 function indiceCor(v) { let k = 0; while (k < 7 && v > CORTES[k]) k++; return k; }
 const CELULA = 44; // tamanho da célula de agrupamento, em pixels
 const PINS = PINOS.map(p => {
@@ -574,6 +595,7 @@ function desenhar() {
   };
   // agrupamento: pinos próximos na tela viram uma bolha com a quantidade; ao aproximar, a bolha se separa
   const grade = new Map();
+  CLUSTERS = [];
   PINS.forEach(p => {
     if (!p.visivel) return;
     const q = mundo(p.lat, p.lon, zoom), x = q.x - ox, y = q.y - oy;
@@ -588,10 +610,11 @@ function desenhar() {
     const x = grupo.reduce((s, v) => s + v.x, 0) / grupo.length, y = grupo.reduce((s, v) => s + v.y, 0) / grupo.length;
     const k = indiceCor(medianaArr(grupo.map(v => v.p.med)));
     const cor = PALETA[k], texto = k >= 4 ? "#fff" : "#15304B";
-    html += `<button class="grupo-m" type="button" data-wx="${ox + x}" data-wy="${oy + y}" style="left:${x}px;top:${y}px;background:${cor};color:${texto}" aria-label="${grupo.length} endereços agrupados, clique para aproximar">${grupo.length}</button>`;
+    html += `<button class="grupo-m" type="button" data-ci="${CLUSTERS.length}" data-wx="${ox + x}" data-wy="${oy + y}" style="left:${x}px;top:${y}px;background:${cor};color:${texto}" aria-label="${grupo.length} endereços agrupados, clique para aproximar">${grupo.length}</button>`;
+    CLUSTERS.push([...new Set(grupo.map(v => v.p.key))]);
   });
   camada.innerHTML = html;
-  camada.querySelectorAll(".pino").forEach(b => b.addEventListener("click", () => alternarPino(b.dataset.key)));
+  camada.querySelectorAll(".pino").forEach(b => b.addEventListener("click", () => { FIXA = true; mostrarDica(b, previaPino(b.dataset.key)); }));
   camada.querySelectorAll(".grupo-m").forEach(b => b.addEventListener("click", () => {
     const nz = Math.min(ZMAX, zoom + 2), f = Math.pow(2, nz - zoom);
     cx = Number(b.dataset.wx) * f; cy = Number(b.dataset.wy) * f; zoom = nz; desenhar();
@@ -622,7 +645,7 @@ function ajustar(pinos) {
 }
 let arrasto = null;
 mapaEl.addEventListener("pointerdown", e => {
-  if (e.target.closest(".mapa-zoom, .legenda, .mapa-rot")) return;
+  if (e.target.closest(".mapa-zoom, .legenda, .mapa-busca, #mdica")) return;
   arrasto = { x: e.clientX, y: e.clientY, cx, cy, movido: false };
 });
 mapaEl.addEventListener("pointermove", e => {
@@ -635,10 +658,61 @@ mapaEl.addEventListener("pointermove", e => {
 const fimArrasto = () => { arrasto = null; mapaEl.classList.remove("arrastando"); };
 mapaEl.addEventListener("pointerup", fimArrasto);
 mapaEl.addEventListener("pointercancel", fimArrasto);
-mapaEl.addEventListener("wheel", e => { e.preventDefault(); zoomPara(zoom + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
+mapaEl.addEventListener("wheel", e => { if (e.target.closest(".mapa-busca, #mdica")) return; e.preventDefault(); zoomPara(zoom + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
 $("#z-mais").addEventListener("click", () => zoomPara(zoom + 1));
 $("#z-menos").addEventListener("click", () => zoomPara(zoom - 1));
 window.addEventListener("resize", desenhar);
+
+// prévia do marcador: resumo do endereço (ou do grupo) sob o cursor ou tocado
+function mediaArr(v) { return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; }
+function resumoTransacoes(base) {
+  const ult = base.reduce((a, x) => (!a || x.dnum > a.dnum ? x : a), null);
+  return { n: base.length, media: mediaArr(base.map(x => x.valor).filter(x => x != null)), m2: medianaArr(base.filter(x => x.m2 != null).map(x => x.m2)), ult };
+}
+function previaPino(key) {
+  const g = GRUPOS.get(key);
+  if (!g) return "";
+  const r = resumoTransacoes(ULTIMA.filter(x => x.key === key));
+  return `<b>${esc(g.rua)}, ${esc(g.numero)}</b>${g.ref ? `<div class="sub">${esc(g.ref)}</div>` : ""}
+    <div>${r.n} ${r.n === 1 ? "transação" : "transações"} · média ${fmt(r.media)}</div>
+    ${r.ult ? `<div class="sub">Última: ${esc(r.ult.data)} · ${fmt(r.ult.valor)}</div>` : ""}
+    <div class="sub">Mediana R$/m²: ${r.m2 != null ? fmt(r.m2) : "—"}</div>
+    <button type="button" data-sel="${esc(key)}">Ver detalhes do endereço</button>`;
+}
+function previaGrupo(ci) {
+  const keys = new Set(CLUSTERS[ci] || []);
+  const r = resumoTransacoes(ULTIMA.filter(x => keys.has(x.key)));
+  return `<b>${keys.size} ${keys.size === 1 ? "endereço" : "endereços"}</b>
+    <div>${r.n} ${r.n === 1 ? "transação" : "transações"} · média ${fmt(r.media)}</div>
+    ${r.ult ? `<div class="sub">Última: ${esc(r.ult.data)} · ${fmt(r.ult.valor)}</div>` : ""}
+    <div class="sub">Clique para aproximar</div>`;
+}
+function mostrarDica(el, html) {
+  const d = $("#mdica"), W = mapaEl.clientWidth;
+  d.innerHTML = html; d.hidden = false;
+  const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
+  d.style.left = (x + 250 > W ? x - 250 : x + 18) + "px";
+  d.style.top = Math.max(8, y - 24) + "px";
+}
+function esconderDica() { FIXA = false; $("#mdica").hidden = true; }
+mapaEl.addEventListener("pointerover", e => {
+  if (e.pointerType !== "mouse" || FIXA) return;
+  const el = e.target.closest && e.target.closest(".pino, .grupo-m");
+  if (!el) return;
+  mostrarDica(el, el.classList.contains("pino") ? previaPino(el.dataset.key) : previaGrupo(el.dataset.ci));
+});
+mapaEl.addEventListener("pointerout", e => {
+  if (e.pointerType !== "mouse" || FIXA) return;
+  const el = e.target.closest && e.target.closest(".pino, .grupo-m");
+  if (el && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pino, .grupo-m"))) esconderDica();
+});
+mapaEl.addEventListener("pointerdown", e => {
+  if (!e.target.closest(".pino, .grupo-m, #mdica, .mapa-busca, .mapa-zoom")) esconderDica();
+});
+mapaEl.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-sel]");
+  if (b) { esconderDica(); selecionar(b.dataset.sel, false); }
+});
 
 // gráfico de evolução
 function grafico(pontos) {
@@ -780,24 +854,26 @@ function desenharPainel(lista) {
     ? `<div class="p-acoes"><button class="btn" id="limpar-rua" type="button">Sair da rua</button></div>`
     : "";
 
+  const ultimasBloco = sel ? "" : `<div class="bloco-p">
+      <h3>Últimas transações</h3>
+      ${ordem.length ? `<div class="linha-t cab"><span>Data</span><span>Endereço</span><span class="area">Área</span><span>Valor</span><span>R$/m²</span></div>` : ""}
+      <div class="lista-t">${ultimas || '<p class="nota">Nenhuma transação com os filtros atuais.</p>'}</div>
+      ${ordem.length > 6 ? `<button type="button" class="ver-todas" data-ver-todas>Ver mais</button>` : ""}
+    </div>`;
   $("#painel").innerHTML = `
     <div class="p-cab"><div>${cabeca}</div>${acoes}</div>
+    ${ultimasBloco}
     <div class="tiles">
       <div class="tile-v"><div class="l">Valor médio por apartamento</div><div class="v acento">${fmt(m.media)}</div></div>
       <div class="tile-v"><div class="l">Mediana do R$/m² <small>(referência)</small></div><div class="v">${fmt(m.mediana)}</div></div>
-      <div class="tile-v"><div class="l">${sel ? "Última transação" : "Transações"}</div><div class="v">${sel ? esc(m.ultima) : m.n}</div></div>
+      <div class="tile-v"><div class="l">${sel ? "Última transação" : "Transações"}</div><div class="v">${sel ? esc(m.ultima) : m.n.toLocaleString("pt-BR")}</div></div>
     </div>
     <div class="bloco-p">
       <h3>${sel ? "Evolução do valor médio neste endereço" : "Evolução de mercado do valor médio por apartamento"}</h3>
       ${grafico(serie(base))}
       <p class="rodape-nota">Média simples dos valores de venda declarados em cada mês. O R$/m² (mediana) aparece só na janela ao passar o mouse, como referência: a área declarada no ITBI pode incluir área comum em condomínios, o que distorce esse indicador.</p>
     </div>
-    ${sel ? blocoUnidades(sel, lista) : `<div class="bloco-p">
-      <h3>Últimas transações</h3>
-      ${ordem.length ? `<div class="linha-t cab"><span>Data</span><span>Endereço</span><span class="area">Área</span><span>Valor</span><span>R$/m²</span></div>` : ""}
-      <div class="lista-t">${ultimas || '<p class="nota">Nenhuma transação com os filtros atuais.</p>'}</div>
-      ${ordem.length > 6 ? `<button type="button" class="ver-todas" data-ver-todas>Ver mais</button>` : ""}
-    </div>`}
+    ${sel ? blocoUnidades(sel, lista) : ""}
     <p class="rodape-nota">Valores declarados nas transações de ITBI; não representam necessariamente o preço atual de mercado.</p>`;
 
   const botaoVerTodas = $("#painel").querySelector("[data-ver-todas]");
@@ -1030,10 +1106,25 @@ function atualizarControles() {
 }
 
 // atualização geral: tudo parte do mesmo conjunto filtrado
+function desenharFiltros() {
+  const itens = [
+    ["Período", (F.ini ? mesRotulo(F.ini) : "início") + " a " + (F.fim ? mesRotulo(F.fim) : "atual")],
+    ["Bairros", rotuloBairros()],
+    ["Tipo de imóvel", F.tipos.size === TIPOS.length ? "todos" : ([...F.tipos].join(", ") || "nenhum")],
+    ["Transação", F.trans.size === 0 ? "todas" : [...F.trans].join(", ")],
+    ["Valor", F.valMax == null ? "sem limite" : "até " + fmt(F.valMax)],
+    ["Área", F.area ? (AREAS.find(a => iguais(a[1], F.area)) || ["", ""])[0] : "qualquer"],
+  ];
+  if (F.rua) itens.push(["Rua", F.rua]);
+  if (F.selKey && GRUPOS.get(F.selKey)) { const g = GRUPOS.get(F.selKey); itens.push(["Endereço", g.rua + ", " + g.numero]); }
+  $("#resumo-filtros").innerHTML = itens.map(([k, v]) => `<span><b>${esc(k)}:</b> ${esc(v)}</span>`).join("");
+}
 function atualizar() {
   const lista = filtrar();
+  ULTIMA = lista;
   atualizarPinos(lista);
   desenharResumo(lista);
+  desenharFiltros();
   desenharPainel(lista);
   atualizarControles();
   desenhar();
