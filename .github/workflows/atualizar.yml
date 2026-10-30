@@ -31,6 +31,10 @@ jobs:
       - name: Gerar o site
         run: python scripts/gerar_site.py
 
+      # Página inicial (mapa e visão do mercado). Os dados ficam em publicacao/ e são copiados por cima do index.html gerado.
+      - name: Adicionar a página inicial
+        run: cp publicacao/index.html publicacao/dados.js publicacao/pinos.js site/
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
