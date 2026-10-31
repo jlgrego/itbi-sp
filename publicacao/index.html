@@ -336,6 +336,8 @@ a { color: inherit; }
 .mapa-busca .busca-campo input { height: 46px; font-size: 14px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 .mapa-busca .busca-campo > svg { top: 14px; }
 .mapa-busca .busca-campo .sugestoes { top: 52px; max-height: 300px; }
+.fechar-sel { position: absolute; top: 14px; right: 14px; background: none; border: 0; font-size: 26px; line-height: 1; color: var(--muted); cursor: pointer; padding: 2px 6px; }
+.fechar-sel:hover { color: var(--ink); }
 .mdica { position: absolute; z-index: 6; width: 230px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--ink); box-shadow: 0 6px 18px rgba(0,0,0,.18); }
 .mdica[hidden] { display: none; }
 .mdica b { font-weight: 600; font-size: 14px; }
@@ -360,6 +362,8 @@ a { color: inherit; }
   .info-mapa { order: 4; }
   .coluna-mapa > .resumo { order: 5; flex: none; }
 }
+.mapa-limpar { position: absolute; top: 72px; left: 14px; z-index: 4; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font: 600 13px var(--sans); color: var(--accent); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.mapa-limpar[hidden] { display: none; }
 </style>
 <script data-goatcounter="https://itbi-sp.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -426,6 +430,7 @@ a { color: inherit; }
       <ul class="sugestoes" id="sugestoes" hidden></ul>
     </div>
         </div>
+        <button type="button" class="mapa-limpar" id="mapa-limpar" hidden></button>
         <div class="camada" id="camada"></div>
         <div class="mapa-zoom">
           <button id="z-mais" type="button" aria-label="Aproximar">+</button>
@@ -635,7 +640,12 @@ function desenhar() {
     CLUSTERS.push([...new Set(grupo.map(v => v.p.key))]);
   });
   camada.innerHTML = html;
-  camada.querySelectorAll(".pino").forEach(b => b.addEventListener("click", () => { FIXA = true; mostrarDica(b, previaPino(b.dataset.key)); }));
+  camada.querySelectorAll(".pino").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.key;
+    if (DICA_KEY === k) { fecharPrevia(); return; } // janelinha aberta deste pino: fecha, ficam só as bolinhas
+    if (F.selKey === k) { fecharPrevia(); F.selKey = null; atualizar(); return; } // detalhes abertos deste endereço: fecha
+    FIXA = true; DICA_KEY = k; mostrarDica(b, previaPino(k));
+  }));
   camada.querySelectorAll(".grupo-m").forEach(b => b.addEventListener("click", () => {
     const nz = Math.min(ZMAX, zoom + 2), f = Math.pow(2, nz - zoom);
     cx = Number(b.dataset.wx) * f; cy = Number(b.dataset.wy) * f; zoom = nz; desenhar();
@@ -731,7 +741,8 @@ function mostrarDica(el, html) {
   d.style.left = (x + 250 > W ? x - 250 : x + 18) + "px";
   d.style.top = Math.max(8, y - 24) + "px";
 }
-function esconderDica() { FIXA = false; $("#mdica").hidden = true; }
+let DICA_KEY = null; // pino cuja janelinha está aberta
+function fecharPrevia() { FIXA = false; DICA_KEY = null; $("#mdica").hidden = true; }
 mapaEl.addEventListener("pointerover", e => {
   if (e.pointerType !== "mouse" || FIXA) return;
   const el = e.target.closest && e.target.closest(".pino, .grupo-m");
@@ -741,14 +752,14 @@ mapaEl.addEventListener("pointerover", e => {
 mapaEl.addEventListener("pointerout", e => {
   if (e.pointerType !== "mouse" || FIXA) return;
   const el = e.target.closest && e.target.closest(".pino, .grupo-m");
-  if (el && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pino, .grupo-m"))) esconderDica();
+  if (el && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pino, .grupo-m"))) fecharPrevia();
 });
 mapaEl.addEventListener("pointerdown", e => {
-  if (!e.target.closest(".pino, .grupo-m, #mdica, .mapa-busca, .mapa-zoom")) esconderDica();
+  if (!e.target.closest(".pino, .grupo-m, #mdica, .mapa-busca, .mapa-zoom")) fecharPrevia();
 });
 mapaEl.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-sel]");
-  if (b) { esconderDica(); selecionar(b.dataset.sel, false); }
+  if (b) { fecharPrevia(); selecionar(b.dataset.sel, false); }
 });
 
 // gráfico de evolução
@@ -886,7 +897,7 @@ function desenharPainel(lista) {
        <h2>${F.bairros.size === D.bairros.length ? "Mercado de São Paulo" : "Mercado de " + esc(rotuloBairros())}</h2>
        <p class="p-sub">Todos os pontos, com os filtros aplicados</p>`;
   const acoes = sel
-    ? `<div class="p-acoes"><button class="btn" id="limpar-sel" type="button">Voltar ao mercado</button><a class="btn" href="#">Ver histórico completo</a></div>`
+    ? `<div class="p-acoes"><button class="btn" id="limpar-sel" type="button">Voltar ao mercado</button><a class="btn" href="#">Ver histórico completo</a></div><button type="button" class="fechar-sel" id="fechar-sel" aria-label="Fechar detalhes">×</button>`
     : F.rua
     ? `<div class="p-acoes"><button class="btn" id="limpar-rua" type="button">Sair da rua</button></div>`
     : "";
@@ -922,6 +933,8 @@ function desenharPainel(lista) {
   }));
   const lim = $("#limpar-sel");
   if (lim) lim.addEventListener("click", () => { F.selKey = null; atualizar(); });
+  const fechar = $("#fechar-sel");
+  if (fechar) fechar.addEventListener("click", () => { F.selKey = null; atualizar(); });
   const sairRua = $("#limpar-rua");
   if (sairRua) sairRua.addEventListener("click", () => { F.rua = null; atualizar(); });
   $("#painel").querySelectorAll("[data-key]").forEach(el => {
@@ -1155,7 +1168,16 @@ function desenharFiltros() {
   if (F.rua) itens.push(["Rua", F.rua]);
   if (F.selKey && GRUPOS.get(F.selKey)) { const g = GRUPOS.get(F.selKey); itens.push(["Endereço", g.rua + ", " + g.numero]); }
   $("#resumo-filtros").innerHTML = itens.map(([k, v]) => `<span><b>${esc(k)}:</b> ${esc(v)}</span>`).join("");
+  const lim = $("#mapa-limpar");
+  lim.hidden = !(F.selKey || F.rua);
+  lim.textContent = F.selKey ? "← Voltar a todos os imóveis" : "← Sair da rua";
 }
+document.addEventListener("click", e => {
+  if (!(e.target.closest && e.target.closest("#mapa-limpar"))) return;
+  F.selKey = null; F.rua = null;
+  fecharPrevia();
+  atualizar();
+});
 function atualizar() {
   const lista = filtrar();
   ULTIMA = lista;
@@ -1176,6 +1198,8 @@ function selecionar(key, centralizar) {
   const pin = PINS.find(p => p.key === key);
   if (pin && centralizar) { const q = mundo(pin.lat, pin.lon, zoom); cx = q.x; cy = q.y; }
   atualizar();
+  // no celular, o painel de detalhes fica abaixo do mapa: leva o usuário até ele
+  if (window.matchMedia("(max-width: 760px)").matches) setTimeout(() => $("#painel").scrollIntoView({ behavior: "smooth", block: "start" }), 60);
 }
 
 // busca
