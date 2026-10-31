@@ -547,6 +547,8 @@ const PALETA = ["#d6efe9", "#b5e2d8", "#8fd2c3", "#63bcab", "#3da393", "#23857a"
 let CORTES = []; // limites das faixas de cor, calculados com os filtros atuais
 let CLUSTERS = []; // endereços de cada bolha desenhada
 let ULTIMA = []; // transações filtradas, para a prévia do marcador
+let VISIVEIS = new Set(); // endereços dentro da área visível do mapa
+let PAINEL_T = null; // atualização da visão geral depois de mover o mapa
 let FIXA = false; // prévia aberta por clique (não some ao tirar o mouse)
 function indiceCor(v) { let k = 0; while (k < 7 && v > CORTES[k]) k++; return k; }
 // tamanho da célula de agrupamento, em pixels: bolhas maiores quando afastado, separam ao aproximar
@@ -619,12 +621,13 @@ function desenhar() {
     return `<button class="pino${sel ? " sel" : ""}" type="button" data-key="${esc(p.key)}" aria-pressed="${sel}" style="left:${x}px;top:${y}px;background:${p.cor}" aria-label="${esc(p.grupo.rua + ", " + p.grupo.numero)}"></button>`;
   };
   // agrupamento: pinos próximos na tela viram uma bolha com a quantidade; ao aproximar, a bolha se separa
-  const grade = new Map();
+  const grade = new Map(), naTela = new Set();
   CLUSTERS = [];
   PINS.forEach(p => {
     if (!p.visivel) return;
     const q = mundo(p.lat, p.lon, zoom), x = q.x - ox, y = q.y - oy;
     if (x < -40 || y < -40 || x > W + 40 || y > H + 40) return;
+    naTela.add(p.key);
     if (p.key === F.selKey) { html += pinoHtml(p, x, y); return; } // o selecionado nunca fica escondido
     const cel = celulaZoom(zoom);
     const chave = Math.floor(x / cel) + ":" + Math.floor(y / cel);
@@ -640,6 +643,13 @@ function desenhar() {
     CLUSTERS.push([...new Set(grupo.map(v => v.p.key))]);
   });
   camada.innerHTML = html;
+  // a visão geral acompanha o que está na tela
+  const mudou = naTela.size !== VISIVEIS.size || [...naTela].some(k => !VISIVEIS.has(k));
+  if (mudou) {
+    VISIVEIS = naTela;
+    clearTimeout(PAINEL_T);
+    PAINEL_T = setTimeout(() => desenharPainel(ULTIMA), 120);
+  }
   camada.querySelectorAll(".pino").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.key;
     if (DICA_KEY === k) { fecharPrevia(); return; } // janelinha aberta deste pino: fecha, ficam só as bolinhas
@@ -873,7 +883,9 @@ function blocoUnidades(sel, lista) {
 // painel: mercado (todos os pontos) ou o endereço selecionado
 function desenharPainel(lista) {
   const sel = F.selKey ? GRUPOS.get(F.selKey) : null;
-  const base = sel ? lista.filter(x => x.key === F.selKey) : lista;
+  // visão geral: só o que está dentro da área visível do mapa
+  const base = sel ? lista.filter(x => x.key === F.selKey) : lista.filter(x => VISIVEIS.has(x.key));
+  const naArea = !sel && new Set(lista.map(x => x.key)).size > new Set(base.map(x => x.key)).size;
   const m = metricas(base);
   const ordem = [...base].sort((a, b) => b.dnum - a.dnum);
   const ultimas = ordem.slice(0, 6).map(t => `
@@ -894,8 +906,8 @@ function desenharPainel(lista) {
        <h2>${esc(F.rua)}</h2>
        <p class="p-sub">Todas as transações da rua, com os filtros aplicados</p>`
     : `<div class="rotulo">Visão geral</div>
-       <h2>${F.bairros.size === D.bairros.length ? "Mercado de São Paulo" : "Mercado de " + esc(rotuloBairros())}</h2>
-       <p class="p-sub">Todos os pontos, com os filtros aplicados</p>`;
+       <h2>${naArea ? "Área visível no mapa" : F.bairros.size === D.bairros.length ? "Mercado de São Paulo" : "Mercado de " + esc(rotuloBairros())}</h2>
+       <p class="p-sub">${naArea ? "Imóveis dentro da área do mapa, com os filtros aplicados" : "Todos os pontos, com os filtros aplicados"}</p>`;
   const acoes = sel
     ? `<div class="p-acoes"><button class="btn" id="limpar-sel" type="button">Voltar ao mercado</button><a class="btn" href="#">Ver histórico completo</a></div><button type="button" class="fechar-sel" id="fechar-sel" aria-label="Fechar detalhes">×</button>`
     : F.rua
