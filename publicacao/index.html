@@ -351,6 +351,15 @@ a { color: inherit; }
   .linha-t > span.valor { grid-area: valor; text-align: right; font-weight: 600; }
   .linha-t > span.m2 { display: block; grid-area: m2; text-align: right; font-size: 13px; color: var(--muted); }
 }
+@media (max-width: 760px) {
+  .grade { display: flex; flex-direction: column; gap: 20px; }
+  .coluna-mapa { display: contents; }
+  .mapa-col { order: 1; }
+  .painel { order: 2; }
+  .resumo-filtros { order: 3; }
+  .info-mapa { order: 4; }
+  .coluna-mapa > .resumo { order: 5; flex: none; }
+}
 </style>
 <script data-goatcounter="https://itbi-sp.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -535,7 +544,8 @@ let CLUSTERS = []; // endereços de cada bolha desenhada
 let ULTIMA = []; // transações filtradas, para a prévia do marcador
 let FIXA = false; // prévia aberta por clique (não some ao tirar o mouse)
 function indiceCor(v) { let k = 0; while (k < 7 && v > CORTES[k]) k++; return k; }
-const CELULA = 44; // tamanho da célula de agrupamento, em pixels
+// tamanho da célula de agrupamento, em pixels: bolhas maiores quando afastado, separam ao aproximar
+const celulaZoom = z => z <= 12 ? 120 : z <= 13 ? 96 : z <= 14 ? 72 : z <= 15 ? 52 : 40;
 const PINS = PINOS.map(p => {
   const m = String(p.endereco || "").match(/^(.*),\s*([^,]+)$/);
   const key = m ? chavePredio(m[1], m[2]) : "";
@@ -611,7 +621,8 @@ function desenhar() {
     const q = mundo(p.lat, p.lon, zoom), x = q.x - ox, y = q.y - oy;
     if (x < -40 || y < -40 || x > W + 40 || y > H + 40) return;
     if (p.key === F.selKey) { html += pinoHtml(p, x, y); return; } // o selecionado nunca fica escondido
-    const chave = Math.floor(x / CELULA) + ":" + Math.floor(y / CELULA);
+    const cel = celulaZoom(zoom);
+    const chave = Math.floor(x / cel) + ":" + Math.floor(y / cel);
     if (!grade.has(chave)) grade.set(chave, []);
     grade.get(chave).push({ p, x, y });
   });
@@ -654,18 +665,34 @@ function ajustar(pinos) {
   desenhar();
 }
 let arrasto = null;
+const PONTEIROS = new Map(); // dedos (ou ponteiros) sobre o mapa, para o gesto de pinça
+let PINCA = null;
+const distanciaPonteiros = () => { const [a, b] = [...PONTEIROS.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
 mapaEl.addEventListener("pointerdown", e => {
+  PONTEIROS.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (PONTEIROS.size === 2) { arrasto = null; mapaEl.classList.remove("arrastando"); PINCA = distanciaPonteiros(); return; }
   if (e.target.closest(".mapa-zoom, .legenda, .mapa-busca, #mdica")) return;
   arrasto = { x: e.clientX, y: e.clientY, cx, cy, movido: false };
 });
 mapaEl.addEventListener("pointermove", e => {
+  if (PONTEIROS.has(e.pointerId)) PONTEIROS.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (PONTEIROS.size === 2 && PINCA) {
+    const d = distanciaPonteiros();
+    if (d > PINCA * 1.35) { zoomPara(zoom + 1); PINCA = d; }
+    else if (d < PINCA / 1.35) { zoomPara(zoom - 1); PINCA = d; }
+    return;
+  }
   if (!arrasto) return;
   const dx = e.clientX - arrasto.x, dy = e.clientY - arrasto.y;
   if (!arrasto.movido && Math.hypot(dx, dy) < 4) return;
   if (!arrasto.movido) { arrasto.movido = true; mapaEl.classList.add("arrastando"); }
   cx = arrasto.cx - dx; cy = arrasto.cy - dy; desenhar();
 });
-const fimArrasto = () => { arrasto = null; mapaEl.classList.remove("arrastando"); };
+const fimArrasto = e => {
+  PONTEIROS.delete(e.pointerId);
+  if (PONTEIROS.size < 2) PINCA = null;
+  if (PONTEIROS.size === 0) { arrasto = null; mapaEl.classList.remove("arrastando"); }
+};
 mapaEl.addEventListener("pointerup", fimArrasto);
 mapaEl.addEventListener("pointercancel", fimArrasto);
 mapaEl.addEventListener("wheel", e => { if (e.target.closest(".mapa-busca, #mdica")) return; e.preventDefault(); zoomPara(zoom + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
